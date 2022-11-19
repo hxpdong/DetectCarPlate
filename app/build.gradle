@@ -56,15 +56,11 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     implementation 'com.readystatesoftware.sqliteasset:sqliteassethelper:+'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
-    implementation 'com.github.mancj:MaterialSearchBar:0.8.5'
+
 
     //tensorflow lite
     implementation 'org.tensorflow:tensorflow-lite-support:0.1.0'
     implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0'
     implementation 'org.tensorflow:tensorflow-lite-gpu:2.4.0'
     implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
-    //ImageView Circle
-    implementation 'de.hdodenhof:circleimageview:1.2.1'
-    //ImageView Zoom
-    implementation 'com.github.MikeOrtiz:TouchImageView:1.4.1'
 }
