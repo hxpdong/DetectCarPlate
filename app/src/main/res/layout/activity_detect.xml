@@ -50,16 +50,48 @@
                     android:text="Tải ảnh"
                      />
             </androidx.appcompat.widget.LinearLayoutCompat>
-
             <TextView
                 android:id="@+id/result"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
-                android:text=""
+                android:text="{{plate}}"
                 android:textColor="@color/black"
                 android:textSize="40px"
                 android:textStyle="bold" />
+            <LinearLayout
+                android:id="@+id/lnlResult"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/txtNumLine"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="Lines: "
+                    android:textColor="@color/black"
+                    android:textSize="40px"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/txtBefore"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="Before sorting: "
+                    android:textColor="@color/black"
+                    android:textSize="40px"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/txtAfter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="After sorting: "
+                    android:textColor="@color/black"
+                    android:textSize="40px"
+                    android:textStyle="bold" />
+            </LinearLayout>
             <TextView
                 android:id="@+id/blank"
                 android:layout_width="match_parent"

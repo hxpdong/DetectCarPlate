@@ -18,6 +18,7 @@ import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,9 +39,9 @@ public class DetectActivity extends AppCompatActivity {
     int imgSize = TF_OD_API_INPUT_SIZE;
 
     ImageView imghinh;
-    TextView txtresult;
+    TextView txtresult, txtnumline, txtafter, txtbefore;
     Button btncamera, btngallery;
-
+    LinearLayout lnlresult;
     ProgressDialog noti;
     private Classifier detector;
     @Override
@@ -51,6 +52,10 @@ public class DetectActivity extends AppCompatActivity {
         txtresult = (TextView) findViewById(R.id.result);
         btncamera = (Button) findViewById(R.id.btnCamera);
         btngallery = (Button) findViewById(R.id.btnGallery);
+        lnlresult = (LinearLayout) findViewById(R.id.lnlResult);
+        txtnumline = (TextView) findViewById(R.id.txtNumLine);
+        txtafter = (TextView) findViewById(R.id.txtAfter);
+        txtbefore = (TextView) findViewById(R.id.txtBefore);
 
         btncamera.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v) { openCamera(); }
@@ -64,6 +69,10 @@ public class DetectActivity extends AppCompatActivity {
         noti.setMessage("Vui lòng đợi...");
         noti.setCancelable(false);
 
+        txtresult.setText("");
+        txtnumline.setText("");
+        txtbefore.setText("");
+        txtafter.setText("");
         //connect to model to detect
         try {
             detector =
@@ -131,7 +140,7 @@ public class DetectActivity extends AppCompatActivity {
                     "- Confidence: " + results.get(i).getConfidence() + "\n");
             canvas.drawRect(results.get(i).getLocation(), paint);
         }
-
+        //lưu trữ tọa độ (x,y) của các đối tượng từ kết quả
         ArrayList<CharacterDetect> pos = new ArrayList<CharacterDetect>();
         for (int i=0; i<ArrNumCarPlate.size(); i++){
             int xpos = 0;
@@ -146,7 +155,7 @@ public class DetectActivity extends AppCompatActivity {
             conf = ArrNumCarPlate.get(i).getConfidence();
             pos.add(new CharacterDetect(xpos, ypos, character, location, conf));
         }
-        /////
+        ///// check 2 đối tượng có tâm tọa độ đụng độ nhau (2 đối tượng chồng lên nhau => chọn đối tượng tỷ lệ cao hơn)
         for(int i=0;i<pos.size(); i++){
             for (int j=0;j<pos.size(); j++){
                 if (i==j) continue;
@@ -162,11 +171,14 @@ public class DetectActivity extends AppCompatActivity {
                 }
             }
         }
-        /////
+        /////tìm trung điểm của trục dọc để xác định biển số có 1 hay 2 hàng
         for (int i=0; i<pos.size();i++){
             System.out.println("Xpos: " + pos.get(i).x + " Ypos: "+pos.get(i).y + " Char: " + pos.get(i).character + " Location RectF: " + pos.get(i).getLocation());
         }
-
+        String plateorigin ="";
+        for (int i=0; i<pos.size();i++){
+            plateorigin = plateorigin + pos.get(i).getCharacter();
+        }
         int ymin = 0, ymax = 0;
         float yavg = 0.0f;
         for (int i=0; i<pos.size();i++){
@@ -188,6 +200,7 @@ public class DetectActivity extends AppCompatActivity {
 
         int numline = 1;
         for(int i=0; i<pos.size(); i++){
+            //nếu có bất kì số nào có tọa độ dọc (y) lớn hơn cạnh dưới của số có tọa độ cao nhất (ymin) thì sẽ có 2 hàng
             if(pos.get(i).getY() == ymin){
                 for (int j=0; j<pos.size(); j++){
                     if (pos.get(j).getY() > pos.get(i).getLocation().bottom){
@@ -197,6 +210,7 @@ public class DetectActivity extends AppCompatActivity {
             }
         }
         System.out.println("Numline is: " + numline);
+        //chia mảng ban đầu thành 1 hoặc 2 mảng dựa trên số hàng đã xác định
         switch(numline){
             case 2:
                 for (int i=0;i<pos.size(); i++){
@@ -222,7 +236,7 @@ public class DetectActivity extends AppCompatActivity {
         for (int i=0; i<line2.size();i++){
             System.out.println("Xpos: " + line2.get(i).getX() + " Ypos: "+line2.get(i).getY() + " Char: " + line2.get(i).getCharacter()+ " Location RectF: " + line2.get(i).getLocation());
         }
-
+        //sắp xếp các mảng vừa được chia theo trục ngang tọa độ (x) tăng dần từ nhỏ tới lớn (tức các số từ trái sang phải)
         CharacterDetect temp;
         for(int i=0;i<line1.size()-1;i++){
             for(int j=i+1;j<line1.size(); j++){
@@ -269,7 +283,7 @@ public class DetectActivity extends AppCompatActivity {
         for (int i=0; i<line2.size();i++){
             System.out.println("Xpos: " + line2.get(i).getX() + " Ypos: "+line2.get(i).getY() + " Char: " + line2.get(i).getCharacter());
         }
-
+        //gộp 2 mảng sau khi được sắp xếp hoàn chỉnh lại thành biển số, line1 sẽ là hàng trên và line2 là hàng dưới
         ArrayList<CharacterDetect> numplate = new ArrayList<CharacterDetect>();
         for(int i=0;i<line1.size();i++){
             numplate.add(line1.get(i));
@@ -285,6 +299,9 @@ public class DetectActivity extends AppCompatActivity {
         System.out.println("The numberplate is : " + plate);
         txtresult.setVisibility(View.VISIBLE);
         txtresult.setText(plate);
+        txtnumline.setText("Lines: " + numline);
+        txtbefore.setText("Before sorting: " + plateorigin);
+        txtafter.setText("After sorting: " + plate);
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -312,6 +329,10 @@ public class DetectActivity extends AppCompatActivity {
             Bitmap mutableBitmap = image.copy(Bitmap.Config.ARGB_8888, true);
             imghinh.setImageBitmap(mutableBitmap);
             txtresult.setText("");
+            txtnumline.setText("");
+            txtbefore.setText("");
+            txtafter.setText("");
+
             noti.show();
             new CountDownTimer(1000, 1000) {
                 public void onFinish() {
