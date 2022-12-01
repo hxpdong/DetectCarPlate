@@ -22,8 +22,7 @@
                 android:layout_marginEnd="13dp"
                 android:layout_marginTop="35dp"
                 android:layout_marginBottom="15dp"
-                tools:srcCompat="@tools:sample/avatars"
-                android:onClick="upnewimage"/>
+                tools:srcCompat="@tools:sample/avatars" />
             <TextView
                 android:id="@+id/textViewTitle"
                 android:layout_width="wrap_content"

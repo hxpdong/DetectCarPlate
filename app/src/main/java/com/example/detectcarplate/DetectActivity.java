@@ -30,10 +30,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DetectActivity extends AppCompatActivity {
-    public static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.35f;
+    public static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.15f;
     public static final int TF_OD_API_INPUT_SIZE = 416;
     private static final boolean TF_OD_API_IS_QUANTIZED = false;
-    private static final String TF_OD_API_MODEL_FILE = "carplate5m.tflite";
+    private static final String TF_OD_API_MODEL_FILE = "carplate5s.tflite";
     private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/classes.txt";
     int imgSize = TF_OD_API_INPUT_SIZE;
 
@@ -104,11 +104,13 @@ public class DetectActivity extends AppCompatActivity {
         char1.setY(char2.getY());
         char1.setCharacter(char2.getCharacter());
         char1.setLocation(char2.getLocation());
+        char1.setConf(char2.getConf());
 
         char2.setX(temp.getX());
         char2.setY(temp.getY());
         char2.setCharacter(temp.getCharacter());
         char2.setLocation(temp.getLocation());
+        char2.setConf(temp.getConf());
     }
 
 
@@ -136,17 +138,37 @@ public class DetectActivity extends AppCompatActivity {
             int ypos = 0;
             String character = "";
             RectF location;
+            Float conf;
             xpos = (int) ((ArrNumCarPlate.get(i).getLocation().left + ArrNumCarPlate.get(i).getLocation().right)/2);
             ypos = (int) ((ArrNumCarPlate.get(i).getLocation().top + ArrNumCarPlate.get(i).getLocation().bottom)/2);
             character = ArrNumCarPlate.get(i).getTitle();
             location = ArrNumCarPlate.get(i).getLocation();
-            pos.add(new CharacterDetect(xpos, ypos, character, location));
+            conf = ArrNumCarPlate.get(i).getConfidence();
+            pos.add(new CharacterDetect(xpos, ypos, character, location, conf));
         }
+        /////
+        for(int i=0;i<pos.size(); i++){
+            for (int j=0;j<pos.size(); j++){
+                if (i==j) continue;
+                else if(
+                        pos.get(i).getY() >= pos.get(j).getLocation().top &&
+                        pos.get(i).getY() <= pos.get(j).getLocation().bottom &&
+                        pos.get(i).getX() >= pos.get(j).getLocation().left &&
+                        pos.get(i).getX() <= pos.get(j).getLocation().right
+                ){
+                    if(pos.get(i).getConf() > pos.get(j).getConf()){
+                        pos.remove(pos.get(j));
+                    } else pos.remove(pos.get(i));
+                }
+            }
+        }
+        /////
         for (int i=0; i<pos.size();i++){
             System.out.println("Xpos: " + pos.get(i).x + " Ypos: "+pos.get(i).y + " Char: " + pos.get(i).character + " Location RectF: " + pos.get(i).getLocation());
         }
 
         int ymin = 0, ymax = 0;
+        float yavg = 0.0f;
         for (int i=0; i<pos.size();i++){
             if(i==0) {ymin = pos.get(i).getY(); ymax = pos.get(i).getY();}
             else {
@@ -158,17 +180,40 @@ public class DetectActivity extends AppCompatActivity {
                 }
             }
         }
-        System.out.println("Ymin: "+ymin + " Ymax: " + ymax + " YAvg: " + (ymin+ymax)/2);
+        yavg = (ymin+ymax)/2;
+        System.out.println("Ymin: "+ymin + " Ymax: " + ymax + " YAvg: " + yavg);
 
         ArrayList<CharacterDetect> line1 = new ArrayList<CharacterDetect>();
         ArrayList<CharacterDetect> line2 = new ArrayList<CharacterDetect>();
 
-        for (int i=0;i<pos.size(); i++){
-            if(pos.get(i).getY() < (ymin+ymax)/2){
-                line1.add(new CharacterDetect(pos.get(i).getX(), pos.get(i).getY(), pos.get(i).character, pos.get(i).location));
+        int numline = 1;
+        for(int i=0; i<pos.size(); i++){
+            if(pos.get(i).getY() == ymin){
+                for (int j=0; j<pos.size(); j++){
+                    if (pos.get(j).getY() > pos.get(i).getLocation().bottom){
+                        numline = 2; break;
+                    }
+                }
             }
-            else line2.add(new CharacterDetect(pos.get(i).getX(), pos.get(i).getY(), pos.get(i).character, pos.get(i).location));
         }
+        System.out.println("Numline is: " + numline);
+        switch(numline){
+            case 2:
+                for (int i=0;i<pos.size(); i++){
+                    if(pos.get(i).getY() < yavg){
+                        line1.add(new CharacterDetect(pos.get(i).getX(), pos.get(i).getY(), pos.get(i).character, pos.get(i).location, pos.get(i).conf));
+                    }
+                    else line2.add(new CharacterDetect(pos.get(i).getX(), pos.get(i).getY(), pos.get(i).character, pos.get(i).location, pos.get(i).conf));
+                }
+                break;
+            case 1:
+                for (int i=0;i<pos.size(); i++){
+                    line1.add(new CharacterDetect(pos.get(i).getX(), pos.get(i).getY(), pos.get(i).character, pos.get(i).location, pos.get(i).conf));
+                }
+                break;
+        }
+
+
         System.out.println("Line 1 : ");
         for (int i=0; i<line1.size();i++){
             System.out.println("Xpos: " + line1.get(i).getX() + " Ypos: "+line1.get(i).getY() + " Char: " + line1.get(i).getCharacter()+ " Location RectF: " + line1.get(i).getLocation());
@@ -247,8 +292,8 @@ public class DetectActivity extends AppCompatActivity {
         if(resultCode == RESULT_OK){
             if (requestCode == 2){
                 image = (Bitmap) data.getExtras().get("data");
-                int dimension = Math.min(image.getWidth(), image.getHeight());
-                image = ThumbnailUtils.extractThumbnail(image, dimension,dimension);
+                //int dimension = Math.min(image.getWidth(), image.getHeight());
+                //image = ThumbnailUtils.extractThumbnail(image, dimension,dimension);
                 image = Bitmap.createScaledBitmap(image, imgSize, imgSize, false);
             }
             else if (requestCode == 3){
