@@ -51,7 +51,6 @@ public class DetectActivity extends AppCompatActivity {
         imghinh = (ImageView) findViewById(R.id.imgHinh);
         txtresult = (TextView) findViewById(R.id.result);
         btncamera = (Button) findViewById(R.id.btnCamera);
-        btngallery = (Button) findViewById(R.id.btnGallery);
         lnlresult = (LinearLayout) findViewById(R.id.lnlResult);
         txtnumline = (TextView) findViewById(R.id.txtNumLine);
         txtafter = (TextView) findViewById(R.id.txtAfter);
@@ -59,9 +58,6 @@ public class DetectActivity extends AppCompatActivity {
 
         btncamera.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v) { openCamera(); }
-        });
-        btngallery.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View v) {openGallery();}
         });
 
         noti = new ProgressDialog(this);
@@ -98,12 +94,6 @@ public class DetectActivity extends AppCompatActivity {
 
 
     }
-    public void openGallery(){
-        //Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setType("image/*");
-        startActivityForResult(intent, 3);
-    }
 
     public void swap(CharacterDetect char1, CharacterDetect char2) {
         CharacterDetect temp;
@@ -138,7 +128,7 @@ public class DetectActivity extends AppCompatActivity {
                     "- Title: " + results.get(i).getTitle() +
                     "- RectF: " + results.get(i).getLocation() +
                     "- Confidence: " + results.get(i).getConfidence() + "\n");
-            canvas.drawRect(results.get(i).getLocation(), paint);
+
         }
         //lưu trữ tọa độ (x,y) của các đối tượng từ kết quả
         ArrayList<CharacterDetect> pos = new ArrayList<CharacterDetect>();
@@ -161,9 +151,9 @@ public class DetectActivity extends AppCompatActivity {
                 if (i==j) continue;
                 else if(
                         pos.get(i).getY() >= pos.get(j).getLocation().top &&
-                        pos.get(i).getY() <= pos.get(j).getLocation().bottom &&
-                        pos.get(i).getX() >= pos.get(j).getLocation().left &&
-                        pos.get(i).getX() <= pos.get(j).getLocation().right
+                                pos.get(i).getY() <= pos.get(j).getLocation().bottom &&
+                                pos.get(i).getX() >= pos.get(j).getLocation().left &&
+                                pos.get(i).getX() <= pos.get(j).getLocation().right
                 ){
                     if(pos.get(i).getConf() > pos.get(j).getConf()){
                         pos.remove(pos.get(j));
@@ -178,6 +168,7 @@ public class DetectActivity extends AppCompatActivity {
         String plateorigin ="";
         for (int i=0; i<pos.size();i++){
             plateorigin = plateorigin + pos.get(i).getCharacter();
+            canvas.drawRect(pos.get(i).getLocation(), paint);
         }
         int ymin = 0, ymax = 0;
         float yavg = 0.0f;
@@ -195,8 +186,7 @@ public class DetectActivity extends AppCompatActivity {
         yavg = (ymin+ymax)/2;
         System.out.println("Ymin: "+ymin + " Ymax: " + ymax + " YAvg: " + yavg);
 
-        ArrayList<CharacterDetect> line1 = new ArrayList<CharacterDetect>();
-        ArrayList<CharacterDetect> line2 = new ArrayList<CharacterDetect>();
+
 
         int numline = 1;
         for(int i=0; i<pos.size(); i++){
@@ -211,6 +201,8 @@ public class DetectActivity extends AppCompatActivity {
         }
         System.out.println("Numline is: " + numline);
         //chia mảng ban đầu thành 1 hoặc 2 mảng dựa trên số hàng đã xác định
+        ArrayList<CharacterDetect> line1 = new ArrayList<CharacterDetect>();
+        ArrayList<CharacterDetect> line2 = new ArrayList<CharacterDetect>();
         switch(numline){
             case 2:
                 for (int i=0;i<pos.size(); i++){
@@ -237,19 +229,10 @@ public class DetectActivity extends AppCompatActivity {
             System.out.println("Xpos: " + line2.get(i).getX() + " Ypos: "+line2.get(i).getY() + " Char: " + line2.get(i).getCharacter()+ " Location RectF: " + line2.get(i).getLocation());
         }
         //sắp xếp các mảng vừa được chia theo trục ngang tọa độ (x) tăng dần từ nhỏ tới lớn (tức các số từ trái sang phải)
-        CharacterDetect temp;
+
         for(int i=0;i<line1.size()-1;i++){
             for(int j=i+1;j<line1.size(); j++){
                 if(line1.get(i).getX() > line1.get(j).getX()){
-                    /*
-                    temp = new CharacterDetect(line1.get(i));
-                    line1.get(i).setX(line1.get(j).getX());
-                    line1.get(i).setY(line1.get(j).getY());
-                    line1.get(i).setCharacter(line1.get(j).getCharacter());
-                    line1.get(j).setX(temp.getX());
-                    line1.get(j).setY(temp.getY());
-                    line1.get(j).setCharacter(temp.getCharacter());
-                     */
                     swap(line1.get(i), line1.get(j));
                 }
 
@@ -265,15 +248,6 @@ public class DetectActivity extends AppCompatActivity {
         for(int i=0;i<line2.size()-1;i++){
             for(int j=i+1;j<line2.size(); j++){
                 if(line2.get(i).getX() > line2.get(j).getX()){
-                    /*
-                    temp = new CharacterDetect(line2.get(i));
-                    line2.get(i).setX(line2.get(j).getX());
-                    line2.get(i).setY(line2.get(j).getY());
-                    line2.get(i).setCharacter(line2.get(j).getCharacter());
-                    line2.get(j).setX(temp.getX());
-                    line2.get(j).setY(temp.getY());
-                    line2.get(j).setCharacter(temp.getCharacter());
-                     */
                     swap(line2.get(i), line2.get(j));
                 }
 
@@ -313,17 +287,6 @@ public class DetectActivity extends AppCompatActivity {
                 //image = ThumbnailUtils.extractThumbnail(image, dimension,dimension);
                 image = Bitmap.createScaledBitmap(image, imgSize, imgSize, false);
             }
-            else if (requestCode == 3){
-                Uri dat = data.getData();
-                try {
-                    image = MediaStore.Images.Media.getBitmap(this.getContentResolver(), dat);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                //int dimension = Math.min(image.getWidth(), image.getHeight());
-                //aimage = ThumbnailUtils.extractThumbnail(image, dimension,dimension);
-                image = Bitmap.createScaledBitmap(image, imgSize, imgSize, false);
-            }
         }
         if (image != null){
             Bitmap mutableBitmap = image.copy(Bitmap.Config.ARGB_8888, true);
@@ -347,4 +310,3 @@ public class DetectActivity extends AppCompatActivity {
         }
     }
 }
-
